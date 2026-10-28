@@ -1562,3 +1562,66 @@ func Test_setFileTimes(t *testing.T) {
 		})
 	}
 }
+
+// trackedLayerReader models the registry pull limiter: a new layer may not open
+// until the preceding stream is closed, even if tar parsing stopped before EOF.
+type trackedLayerReader struct {
+	io.Reader
+	onClose func()
+}
+
+func (r *trackedLayerReader) Close() error {
+	r.onClose()
+	return nil
+}
+
+func TestGetFSFromLayersReleasesStreamsBeforeNextLayer(t *testing.T) {
+	previousMountInfo := config.MountInfoPath
+	mountInfo := filepath.Join(t.TempDir(), "mountinfo")
+	if err := os.WriteFile(mountInfo, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	config.MountInfoPath = mountInfo
+	t.Cleanup(func() { config.MountInfoPath = previousMountInfo })
+
+	for _, broken := range []bool{false, true} {
+		t.Run(fmt.Sprintf("broken=%v", broken), func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			open, closed := false, 0
+			var layers []v1.Layer
+			count := 6 // More than the registry library's default four permits.
+			if broken {
+				count = 1
+			}
+			for i := 0; i < count; i++ {
+				layer := mockv1.NewMockLayer(ctrl)
+				layer.EXPECT().MediaType().Return(types.OCILayer, nil)
+				layer.EXPECT().Uncompressed().DoAndReturn(func() (io.ReadCloser, error) {
+					if open {
+						t.Fatal("previous layer stream was not released before opening the next")
+					}
+					open = true
+					payload := make([]byte, 4096) // tar EOF precedes the reader's EOF.
+					if broken {
+						payload = []byte("invalid tar header")
+					}
+					return &trackedLayerReader{Reader: bytes.NewReader(payload), onClose: func() {
+						if !open {
+							t.Error("layer stream closed more than once")
+						}
+						open = false
+						closed++
+					}}, nil
+				})
+				layers = append(layers, layer)
+			}
+			_, err := GetFSFromLayers(t.TempDir(), layers, ExtractFunc(fakeExtract))
+			if (err != nil) != broken {
+				t.Fatalf("error=%v, broken=%v", err, broken)
+			}
+			if open || closed != count {
+				t.Fatalf("stream leak: open=%v, closed=%d, want=%d", open, closed, count)
+			}
+		})
+	}
+}
