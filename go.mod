@@ -1,6 +1,8 @@
 module github.com/chainguard-dev/kaniko
 
-go 1.26.8
+go 1.26.10
+
+toolchain go1.27.3
 
 require (
 	cloud.google.com/go/storage v1.70.0
