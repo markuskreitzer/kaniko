@@ -1,6 +1,6 @@
 module github.com/chainguard-dev/kaniko
 
-go 1.24.3
+go 1.25.0
 
 require (
 	cloud.google.com/go/storage v1.57.2
@@ -28,14 +28,14 @@ require (
 	github.com/spf13/afero v1.15.0
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
-	golang.org/x/net v0.47.0
+	golang.org/x/net v0.55.0
 	golang.org/x/oauth2 v0.33.0
-	golang.org/x/sync v0.18.0
+	golang.org/x/sync v0.20.0
 )
 
 require (
 	github.com/GoogleCloudPlatform/docker-credential-gcr/v2 v2.1.30
-	github.com/containerd/containerd v1.7.29
+	github.com/containerd/containerd v1.7.36
 )
 
 require github.com/googleapis/enterprise-certificate-proxy v0.3.7 // indirect
@@ -115,9 +115,9 @@ require (
 	github.com/vbatts/tar-split v0.12.2 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/crypto v0.45.0 // indirect
-	golang.org/x/sys v0.38.0
-	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/crypto v0.52.0 // indirect
+	golang.org/x/sys v0.45.0
+	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	google.golang.org/api v0.256.0
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
@@ -153,7 +153,7 @@ require (
 	github.com/containerd/platforms v1.0.0-rc.2 // indirect
 	github.com/containerd/ttrpc v1.2.7 // indirect
 	github.com/containerd/typeurl/v2 v2.2.3 // indirect
-	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
+	github.com/cyphar/filepath-securejoin v0.5.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
