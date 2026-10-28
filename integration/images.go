@@ -27,6 +27,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -188,7 +189,7 @@ func FindDockerFiles(dir, dockerfilesPattern string) ([]string, error) {
 // keeps track of which files have been built.
 type DockerFileBuilder struct {
 	// Holds all available docker files and whether or not they've been built
-	filesBuilt              map[string]struct{}
+	filesBuilt              sync.Map
 	DockerfilesToIgnore     map[string]struct{}
 	TestCacheDockerfiles    map[string]struct{}
 	TestOCICacheDockerfiles map[string]struct{}
@@ -199,9 +200,7 @@ type logger func(string, ...interface{})
 // NewDockerFileBuilder will create a DockerFileBuilder initialized with dockerfiles, which
 // it will assume are all as yet unbuilt.
 func NewDockerFileBuilder() *DockerFileBuilder {
-	d := DockerFileBuilder{
-		filesBuilt: map[string]struct{}{},
-	}
+	d := DockerFileBuilder{}
 	d.DockerfilesToIgnore = map[string]struct{}{
 		"Dockerfile_test_add_404": {},
 		// TODO: remove test_user_run from this when https://github.com/GoogleContainerTools/container-diff/issues/237 is fixed
@@ -297,7 +296,7 @@ func (d *DockerFileBuilder) BuildImage(t *testing.T, config *integrationTestConf
 }
 
 func (d *DockerFileBuilder) BuildImageWithContext(t *testing.T, config *integrationTestConfig, dockerfilesPath, dockerfile, contextDir string) error {
-	if _, present := d.filesBuilt[dockerfile]; present {
+	if _, present := d.filesBuilt.Load(dockerfile); present {
 		return nil
 	}
 	gcsBucket, gcsClient, serviceAccount, imageRepo := config.gcsBucket, config.gcsClient, config.serviceAccount, config.imageRepo
@@ -341,7 +340,7 @@ func (d *DockerFileBuilder) BuildImageWithContext(t *testing.T, config *integrat
 	}
 	timing.DefaultRun.Stop(timer)
 
-	d.filesBuilt[dockerfile] = struct{}{}
+	d.filesBuilt.Store(dockerfile, struct{}{})
 
 	return nil
 }
