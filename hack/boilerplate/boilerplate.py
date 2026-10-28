@@ -67,6 +67,11 @@ def file_passes(filename, refs, regexs):
     else:
         ref = refs[basename]
 
+    # Preserve the upstream copyright on the two extracted Apache-2.0 Moby helpers.
+    # The full license body is still checked against the normal Go template.
+    if filename.replace("\\", "/").endswith(("/internal/buildargs/buildargs.go", "/internal/buildargs/buildargs_test.go")):
+        ref = [line.replace("Copyright YEAR Google LLC", "Copyright YEAR-YEAR Docker, Inc.") for line in ref]
+
     # remove build tags from the top of Go files
     if extension == "go":
         p = regexs["go_build_constraints_go"]
