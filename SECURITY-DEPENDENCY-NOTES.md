@@ -1,7 +1,9 @@
 # Dependency refresh (2026-10-28)
 
-The tracked vendor tree is regenerated from go.mod/go.sum. Docker SDK 28.5.2 still references the older go-archive compression API. Three vendored files retain a small compatibility patch for go-archive 0.3.3: pkg/archive/archive_deprecated.go uses compression.Compression; daemon/graphdriver/fsdiff.go and builder/remotecontext/git.go import compression and use compression.None. Reapply these adaptations after regenerating vendor until Docker provides a compatible release. The uncompressed archive behavior is unchanged.
+Docker SDK 28.5.2 had two high advisories with no fixed SDK release (GHSA-rg2x-37c3-w2rh and GHSA-x86f-5xw2-fm2r). The SDK has now been removed from go.mod, go.sum and vendor. This project used only its build-argument, archive, xattr and image-health configuration helpers; no daemon API is required.
 
-Validation: Linux executor cross-build, Linux utility-test compilation, and native TestGetInputFrom/TestRetry/TestRetryWithResult pass. Full privileged Linux/container integration tests were not run on the Mac.
+Archive/compression operations now use maintained moby/go-archive 0.3.3 directly. Health configuration uses the same docker-image-spec type that Docker aliased. Linux xattr operations use containerd/continuity/sysx, preserving no-follow operations, absent-attribute handling and unsupported-filesystem behavior. Non-Linux capability handling remains a no-op, as in the former Docker helper.
 
-Docker SDK 28.5.2 remains subject to GHSA-rg2x-37c3-w2rh and GHSA-x86f-5xw2-fm2r; no fixed SDK release was available. These concern daemon archive/copy operations. This dependency update does not claim those advisories fixed or dismiss their alerts. Running container-builder hosts/services have not been deployed or upgraded by this source change.
+The small build-argument helper and its upstream tests are extracted from Moby v28.5.2 into internal/buildargs, with LICENSE and NOTICE retained. This is Dockerfile ARG/proxy-filtering logic; it includes no Docker daemon/client code. The existing Kaniko wrapper and upstream helper tests verify its behavior.
+
+Validation before publication: upstream build-argument tests, Kaniko Dockerfile tests, selected archive/utility tests, Linux executor/warmer cross-builds and Linux executor-test compilation pass. A full native util run has one Linux-only /proc/self/mountinfo failure on macOS; full executor tests also require Linux. Full Linux CI must be assessed on this exact replacement commit. No running builder service has been deployed.
